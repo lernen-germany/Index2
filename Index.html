@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<title>German Match Game</title>
+<style>
+body{
+    font-family:sans-serif;
+    background:#eef2f3;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    direction:rtl;
+}
+.game{
+    background:white;
+    padding:20px;
+    border-radius:15px;
+    display:flex;
+    gap:20px;
+    box-shadow:0 10px 25px rgba(0,0,0,.15);
+}
+.column{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+.item{
+    padding:10px 15px;
+    background:#f1f1f1;
+    border-radius:10px;
+    cursor:pointer;
+    transition:.2s;
+    text-align:center;
+}
+.item:hover{transform:scale(1.05);}
+.selected{outline:3px solid #2196f3;}
+.correct{
+    background:#4caf50;
+    color:white;
+    animation:pop .3s;
+}
+.wrong{
+    background:#f44336;
+    color:white;
+    animation:shake .3s;
+}
+@keyframes pop{
+    from{transform:scale(.8)}
+    to{transform:scale(1)}
+}
+@keyframes shake{
+    0%{transform:translateX(0)}
+    25%{transform:translateX(-5px)}
+    50%{transform:translateX(5px)}
+    75%{transform:translateX(-5px)}
+    100%{transform:translateX(0)}
+}
+</style>
+</head>
+<body>
+
+<div class="game">
+    <div class="column" id="deCol"></div>
+    <div class="column" id="faCol"></div>
+</div>
+
+<script>
+let selectedDe=null;
+let words=[];
+
+// لینک CSV واقعی تو Google Sheets
+const CSV_URL = "https://docs.google.com/spreadsheets/d/1o9IzlEOipQm4TAnqqMe1MfxDvE6LFJYUEkYt2TeJ5Oc/export?format=csv";
+
+fetch(CSV_URL)
+.then(r=>r.text())
+.then(t=>{
+    const rows=t.trim().split("\n").slice(1);
+    rows.forEach(r=>{
+        const [de,fa]=r.split(",");
+        words.push({de:de.trim(),fa:fa.trim()});
+    });
+    start();
+});
+
+function shuffle(a){return a.sort(()=>Math.random()-0.5);}
+
+function start(){
+    const d=document.getElementById("deCol");
+    const f=document.getElementById("faCol");
+
+    shuffle([...words]).forEach(w=>{
+        const e=document.createElement("div");
+        e.className="item";
+        e.innerText=w.de;
+        e.dataset.word=w.de;
+        e.onclick=()=>selectDe(e);
+        d.appendChild(e);
+    });
+
+    shuffle([...words]).forEach(w=>{
+        const e=document.createElement("div");
+        e.className="item";
+        e.innerText=w.fa;
+        e.dataset.word=w.de;
+        e.onclick=()=>selectFa(e);
+        f.appendChild(e);
+    });
+}
+
+function selectDe(el){
+    if(el.classList.contains("correct"))return;
+    document.querySelectorAll("#deCol .item").forEach(i=>i.classList.remove("selected"));
+    selectedDe=el;
+    el.classList.add("selected");
+}
+
+function selectFa(el){
+    if(!selectedDe || el.classList.contains("correct"))return;
+
+    if(el.dataset.word===selectedDe.dataset.word){
+        el.classList.add("correct");
+        selectedDe.classList.add("correct");
+    }else{
+        el.classList.add("wrong");
+        selectedDe.classList.add("wrong");
+        setTimeout(()=>{
+            el.classList.remove("wrong");
+            selectedDe.classList.remove("wrong");
+        },500);
+    }
+    selectedDe.classList.remove("selected");
+    selectedDe=null;
+}
+</script>
+
+</body>
+</html>
